@@ -18,6 +18,10 @@
 
 	function local_send_json($json, $is_error=0){
 
+		if ((! $is_error) && (isset($json['error']))){
+			$is_error = 1;
+		}
+
 		if ($is_error){
 			header("HTTP/1.1 400 Bad Request");
 		}
@@ -50,8 +54,8 @@
 
 	# Basics (everything else)
 
-	$grant = get_str("grant_type");
-	$code = get_str("code");
+	$grant = request_str("grant_type");
+	$code = request_str("code");
 
 	if ((! $code) || (! $grant)){
 		$error = "invalid_request";
@@ -141,11 +145,15 @@
 	$perms_map = api_oauth2_access_tokens_permissions_map();
 	$scope = $perms_map[$access_token['perms']];
 
+	$expires = $access_token['expires'];
+	$expires_in = $expires - time();
+
 	$rsp = array(
 		'access_token' => $access_token['access_token'],
 		# 'token_type' => 'OMGWTF... see section 7.1',
 		'scope' => $scope,
-		'expires' => $access_token['expires'],
+		'expires' => $expires,
+		'expires_in' => $expires_in,
 	);
 
 	local_send_json($rsp);
